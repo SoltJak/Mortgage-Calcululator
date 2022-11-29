@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
 from mortgage import mortgageData as mD
 
+# Initial Data:
 mortgage = mD(.02, .075, 300000, 360, 'fixed')
 
 layout = html.Div(className='app-body', children=[
