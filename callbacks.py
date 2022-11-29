@@ -164,38 +164,7 @@ def get_callbacks(app):
     )
     def create_table_mo_def(table_mo_def, lang):
         df_source = pd.read_json(table_mo_def, orient='split')
-        table_def = dict({
-            "header_values": [ "<b>Month<b>",
-                    "<b>Beginning Balance<b>",
-                    "<b>Installment<b>",
-                    "<b>Interest<b>",
-                    "<b>Principal<b>",
-                    "<b>Cumulative installment<b>",
-                    "<b>Cumulative interest<b>",
-                    "<b>Cumulative princiapl paid<b>",
-                    "<b>Ending Balance<b>"] if lang == 1 else
-                    [ "<b>Miesiąc<b>",
-                    "<b>Do spłaty - początek<b>",
-                    "<b>Rata kredytu<b>",
-                    "<b>Część odsetkowa<b>",
-                    "<b>Część kapitałowa<b>",
-                    "<b>Suma rat<b>",
-                    "<b>Suma odsetek<b>",
-                    "<b>Suma spłaconego kapitału<b>",
-                    "<b>Do spłaty - koniec<b>"],
-            "header_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
-            "values": [df_source["Month"],
-                    df_source["Balance"],
-                    df_source["Installment"],
-                    df_source["Interest"],
-                    df_source["Principal"],
-                    df_source["Total Payment"],
-                    df_source["Total Interest"],
-                    df_source["Total Principal"],
-                    df_source["Ending Balance"]],
-            "values_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
-            "values_format": [".4", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f"]
-            })
+        table_def = create_inst_table_def(df_source, "month", lang)
         return table_def
     #### 6. Installments table data - Yearly
     @app.callback(
@@ -205,38 +174,7 @@ def get_callbacks(app):
     )
     def create_table_yr_def(table_yr_def, lang):
         df_source = pd.read_json(table_yr_def, orient='split')
-        table_def = dict({
-            "header_values": [ "<b>Year<b>",
-                    "<b>Beginning Balance<b>",
-                    "<b>Installment<b>",
-                    "<b>Interest<b>",
-                    "<b>Principal<b>",
-                    "<b>Cumulative installment<b>",
-                    "<b>Cumulative interest<b>",
-                    "<b>Cumulative princiapl paid<b>",
-                    "<b>Ending Balance<b>"] if lang == 1 else
-                    [ "<b>Rok<b>",
-                    "<b>Do spłaty - początek<b>",
-                    "<b>Rata kredytu<b>",
-                    "<b>Część odsetkowa<b>",
-                    "<b>Część kapitałowa<b>",
-                    "<b>Suma rat<b>",
-                    "<b>Suma odsetek<b>",
-                    "<b>Suma spłaconego kapitału<b>",
-                    "<b>Do spłaty - koniec<b>"],
-            "header_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
-            "values": [df_source["Year"],
-                    df_source["Balance"],
-                    df_source["Installment"],
-                    df_source["Interest"],
-                    df_source["Principal"],
-                    df_source["Total Payment"],
-                    df_source["Total Interest"],
-                    df_source["Total Principal"],
-                    df_source["Ending Balance"]],
-            "values_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
-            "values_format": [".4", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f"]
-            })
+        table_def = create_inst_table_def(df_source, "year", lang)
         return table_def
     ## Update graphs
     ### 1. Updated scatter plot - monthly
@@ -260,55 +198,14 @@ def get_callbacks(app):
         total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
         tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
         tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
-        fig_def = dict({
-            "data": [
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_balance,
-                    "name": balance_name,
-                    "hovertemplate": "<b>Month</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>"
-                        
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalPay,
-                    "name": total_pay_name,
-                    "hovertemplate": "<b>Month</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>"            
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalInt,
-                    "name": tot_interest,    
-                    "hovertemplate": "<b>Month</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>"           
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalPrin,
-                    "name": tot_principal,
-                    "hovertemplate": "<b>Month</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"
-        
-                }],
-            "layout": 
-                {
-                    "title": 
-                        {
-                            "text": chart_title
-                        },
-                    "xaxis":
-                        {
-                            "title": x_axis_title
-                        },
-                    "yaxis":
-                        {
-                            "title": y_axis_title
-                        },
-                    "template" : "plotly_dark"
-                }
-        })
+        traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
+        traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
+        axes_names = [x_axis_title, y_axis_title]
+        hovertemplates = ["<b>Month</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
+        fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)    
         return go.Figure(fig_def), go.Figure(fig_def)
     ### 2. Updated scatter plot - yearly
     @app.callback(
@@ -331,55 +228,14 @@ def get_callbacks(app):
         total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
         tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
         tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
-        fig_def = dict({
-            "data": [
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_balance,
-                    "name": balance_name,
-                    "hovertemplate": "<b>Year</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>"
-                        
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalPay,
-                    "name": total_pay_name,
-                    "hovertemplate": "<b>Year</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>"
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalInt,
-                    "name": tot_interest,    
-                    "hovertemplate": "<b>Year</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>"
-                },
-                {
-                    "type": "scatter",
-                    "x": x_series,
-                    "y": trace_totalPrin,
-                    "name": tot_principal,
-                    "hovertemplate": "<b>Year</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"
-        
-                }],
-            "layout": 
-                {
-                    "title": 
-                        {
-                            "text": chart_title
-                        },
-                    "xaxis":
-                        {
-                            "title": x_axis_title
-                        },
-                    "yaxis":
-                        {
-                            "title": y_axis_title
-                        },
-                    "template" : "plotly_dark"
-                }
-        })
+        traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
+        traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
+        axes_names = [x_axis_title, y_axis_title]
+        hovertemplates = ["<b>Year</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
+        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
+        fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)
         return go.Figure(fig_def), go.Figure(fig_def)
     ### 3. Pie chart - share of interest & principal within total payment
     @app.callback(
@@ -480,50 +336,8 @@ def get_callbacks(app):
         Output('table_inst_mo', 'figure'),
         Input('table_mo_def', 'data')
     )
-    def create_table_installments_def(table_mo_def):
-        # Row colors definition
-        headerColor = 'black'
-        rowEvenColor = 'black'
-        rowOddColor = 'dimgrey'
-        # Get basic data for the table
-        payment_table_data = table_mo_def
-        # Return final input to create the table
-        table_def = dict({
-            "data": [
-            {
-                "type": "table",
-                "header": {
-                "values": payment_table_data["header_values"],
-                "line": {
-                    "color": "white",
-                    "width": .2
-                },
-                "fill_color": headerColor,
-                "align": payment_table_data["header_align"],
-                "font": {
-                    "color": "white",
-                    "size": 12
-                }
-                },
-                "cells": {
-                "values": payment_table_data["values"],
-                "format": payment_table_data["values_format"],
-                "line": {
-                    "color": "white",
-                    "width": .2
-                },
-                # 2-D list of colors for alternating rows
-                "fill_color": [[rowOddColor,rowEvenColor]*1000],
-                "align": payment_table_data["values_align"],
-                # "font": {
-                #   "color": "white",
-                #   "size": 11}
-                }    
-            }],
-            "layout": {
-            "template" : "plotly_dark",
-            }
-        })
+    def create_table_monthly(table_mo_def):
+        table_def = create_table_installments_def(table_mo_def)
         # Get the plot - Monthly installments table
         return go.Figure(table_def)
     ### 6. Table of payments, split on interest and principal, balance - yearly
@@ -531,50 +345,8 @@ def get_callbacks(app):
         Output('table_inst_yr', 'figure'),
         Input('table_yr_def', 'data')
     )
-    def create_table_installments_def(table_yr_def):
-        # Row colors definition
-        headerColor = 'black'
-        rowEvenColor = 'black'
-        rowOddColor = 'dimgrey'
-        # Get basic data for the table
-        payment_table_data = table_yr_def
-        # Return final input to create the table
-        table_def = dict({
-            "data": [
-            {
-                "type": "table",
-                "header": {
-                "values": payment_table_data["header_values"],
-                "line": {
-                    "color": "white",
-                    "width": .2
-                },
-                "fill_color": headerColor,
-                "align": payment_table_data["header_align"],
-                "font": {
-                    "color": "white",
-                    "size": 12
-                }
-                },
-                "cells": {
-                "values": payment_table_data["values"],
-                "format": payment_table_data["values_format"],
-                "line": {
-                    "color": "white",
-                    "width": .2
-                },
-                # 2-D list of colors for alternating rows
-                "fill_color": [[rowOddColor,rowEvenColor]*1000],
-                "align": payment_table_data["values_align"],
-                # "font": {
-                #   "color": "white",
-                #   "size": 11}
-                }    
-            }],
-            "layout": {
-            "template" : "plotly_dark",
-            }
-        })
+    def create_table_yearly(table_yr_def):
+        table_def = create_table_installments_def(table_yr_def)
         # Get the plot - Yearly installments table
         return go.Figure(table_def)
     #### X. TEST
@@ -608,3 +380,116 @@ def get_callbacks(app):
         else:
             print("Please specify installment type correctly")
             pass
+    
+    def create_table_installments_def(inp_table_def):
+        # Row colors definition
+        headerColor = 'black'
+        rowEvenColor = 'black'
+        rowOddColor = 'dimgrey'
+        # Get basic data for the table
+        payment_table_data = inp_table_def
+        # Return final input to create the table
+        table_def = dict({
+            "data": [
+            {
+                "type": "table",
+                "header": {
+                "values": payment_table_data["header_values"],
+                "line": {
+                    "color": "white",
+                    "width": .2
+                },
+                "fill_color": headerColor,
+                "align": payment_table_data["header_align"],
+                "font": {
+                    "color": "white",
+                    "size": 12
+                }
+                },
+                "cells": {
+                "values": payment_table_data["values"],
+                "format": payment_table_data["values_format"],
+                "line": {
+                    "color": "white",
+                    "width": .2
+                },
+                # 2-D list of colors for alternating rows
+                "fill_color": [[rowOddColor,rowEvenColor]*1000],
+                "align": payment_table_data["values_align"],
+                # "font": {
+                #   "color": "white",
+                #   "size": 11}
+                }    
+            }],
+            "layout": {
+            "template" : "plotly_dark",
+            }
+        })
+        return table_def
+    
+    def create_inst_table_def(df_source, periodType, lang):
+        period_name = []
+        if periodType == "month":
+            period_name.append("Month")
+            period_name.append("Miesiąc")
+        elif periodType == "year":
+            period_name.append("Year")
+            period_name.append("Rok")           
+
+        table_def = dict({
+        "header_values": [ f"<b>{period_name[0]}<b>",
+                "<b>Beginning Balance<b>",
+                "<b>Installment<b>",
+                "<b>Interest<b>",
+                "<b>Principal<b>",
+                "<b>Cumulative installment<b>",
+                "<b>Cumulative interest<b>",
+                "<b>Cumulative princiapl paid<b>",
+                "<b>Ending Balance<b>"] if lang == 1 else
+                [ f"<b>{period_name[1]}<b>",
+                "<b>Do spłaty - początek<b>",
+                "<b>Rata kredytu<b>",
+                "<b>Część odsetkowa<b>",
+                "<b>Część kapitałowa<b>",
+                "<b>Suma rat<b>",
+                "<b>Suma odsetek<b>",
+                "<b>Suma spłaconego kapitału<b>",
+                "<b>Do spłaty - koniec<b>"],
+        "header_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values": [df_source[f"{period_name[0]}"],
+                df_source["Balance"],
+                df_source["Installment"],
+                df_source["Interest"],
+                df_source["Principal"],
+                df_source["Total Payment"],
+                df_source["Total Interest"],
+                df_source["Total Principal"],
+                df_source["Ending Balance"]],
+        "values_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values_format": [".4", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f"]
+        })
+        return table_def
+    
+    def create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates):
+        fig_def = dict({
+            "data": [],
+            "layout": 
+                {
+                    "title": 
+                        {
+                            "text": chart_title
+                        },
+                    "xaxis":
+                        {
+                            "title": axes_names[0]
+                        },
+                    "yaxis":
+                        {
+                            "title": axes_names[1]
+                        },
+                    "template" : "plotly_dark"
+                }
+        })
+        for i in range (0, len(traces)):
+            fig_def["data"].append({"type": "scatter", "x": x_series, "y": traces[i], "name": traces_names[i], "hovertemplate": hovertemplates[i]})    
+        return fig_def
