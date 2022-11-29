@@ -14,8 +14,6 @@ from dash_bootstrap_templates import load_figure_template
 import plotly.graph_objs as go
 import pandas as pd
 
-# import callbacks
-
 # Import mortgageData class
 from mortgage import mortgageData as mD
 
@@ -49,6 +47,9 @@ app.layout = html.Div(className='app-body', children=[
     dcc.Store(id='first_installment'),
     dcc.Store(id='installments_df'),
     dcc.Store(id='installments_df_yr'),
+    dcc.Store(id='table_mo_def'),
+    dcc.Store(id='table_yr_def'),
+    dcc.Store(id='wibor_eff_store'),
     # About the app
     html.Div(className="row",
         children=[
@@ -310,8 +311,36 @@ def calculate_first_installment(principal, install_no, install_type, totalIntere
     elif install_type == "desc":
         first_payment = round(principal * (1 / install_no + totalInterestRate / 12), 2)
     return first_payment
-#### TODO 2. Custom installment (for WIBOR effect check)
-
+#### 2. Custom installment (for WIBOR effect check)
+@app.callback(
+    Output('wibor_eff_store', 'data'),
+    Input('principal_value', 'value'),
+    Input('no_of_installments_t', 'value'),
+    Input('installments_type', 'value'),
+    Input('bank_interest', 'value'),
+)
+def df_wibor_effect(loanAmount, no_of_install, inst_type, bank_iterest):
+    # wibor options & amount columns hard-coded
+    wibor = [0, .01, .02, .03, .04, .05, .06, .07, .08, .1, .12, .15]
+    amount = [0.1 * loanAmount, 0.2 * loanAmount, 0.3 * loanAmount, 0.4 * loanAmount, 0.5 * loanAmount, 0.6 * loanAmount, 0.7 * loanAmount, 0.8 * loanAmount, 0.9 * loanAmount, loanAmount]
+    amount.sort(reverse=True)
+    # iterate to find installment value for different loan amounts and Wibor and create column names
+    data = []
+    column_names = ["Loan Amount Left to pay"]  # Only 1st column name assigned
+    for i in range(0, len(amount)):
+        row = [amount[i]]                       # Only 1st column value assigned - amount left to pay
+        for j in range(0, len(wibor)):
+            temp_installment = calculate_first_installment_custom(inst_type, amount[i], bank_iterest/100, no_of_install, wibor[j])
+            row.append(temp_installment)
+            # get column names - wibor amounts
+            if i == 0:
+                column_names.append(str(round((wibor[j]*100), 1)) + "%")
+        data.append(row)
+    df_wibor_effect = pd.DataFrame(data=data, columns=column_names)
+    # convereted to dictionary:
+    return {'z': df_wibor_effect.iloc[:,1:].values.tolist(),
+            'x': df_wibor_effect.iloc[:,1:].columns.tolist(),
+            'y': df_wibor_effect.iloc[:,0].values.tolist()}
 #### 3. Installments dataframe - monthly
 @app.callback(
     Output('installments_df', 'data'),
@@ -373,6 +402,88 @@ def df_installments_yr(data, principal_val):
     df_grouped["Total Principal"] = df_grouped["Principal"].cumsum()
     df_grouped = df_grouped[["Balance", "Installment", "Interest", "Principal", "Total Payment", "Total Interest", "Total Principal", "Ending Balance"]]
     return df_grouped.reset_index().to_json(orient='split', date_format='iso')
+#### 5. Installments table data - Monthly
+@app.callback(
+    Output('table_mo_def', 'data'),
+    Input('installments_df', 'data'),    
+    Input('lang_sel', 'value')
+)
+def create_table_mo_def(table_mo_def, lang):
+    df_source = pd.read_json(table_mo_def, orient='split')
+    table_def = dict({
+        "header_values": [ "<b>Month<b>",
+                "<b>Beginning Balance<b>",
+                "<b>Installment<b>",
+                "<b>Interest<b>",
+                "<b>Principal<b>",
+                "<b>Cumulative installment<b>",
+                "<b>Cumulative interest<b>",
+                "<b>Cumulative princiapl paid<b>",
+                "<b>Ending Balance<b>"] if lang == 1 else
+                [ "<b>Miesiąc<b>",
+                "<b>Do spłaty - początek<b>",
+                "<b>Rata kredytu<b>",
+                "<b>Część odsetkowa<b>",
+                "<b>Część kapitałowa<b>",
+                "<b>Suma rat<b>",
+                "<b>Suma odsetek<b>",
+                "<b>Suma spłaconego kapitału<b>",
+                "<b>Do spłaty - koniec<b>"],
+        "header_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values": [df_source["Month"],
+                df_source["Balance"],
+                df_source["Installment"],
+                df_source["Interest"],
+                df_source["Principal"],
+                df_source["Total Payment"],
+                df_source["Total Interest"],
+                df_source["Total Principal"],
+                df_source["Ending Balance"]],
+        "values_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values_format": [".4", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f"]
+        })
+    return table_def
+#### 6. Installments table data - Yearly
+@app.callback(
+    Output('table_yr_def', 'data'),
+    Input('installments_df_yr', 'data'),    
+    Input('lang_sel', 'value')
+)
+def create_table_yr_def(table_yr_def, lang):
+    df_source = pd.read_json(table_yr_def, orient='split')
+    table_def = dict({
+        "header_values": [ "<b>Year<b>",
+                "<b>Beginning Balance<b>",
+                "<b>Installment<b>",
+                "<b>Interest<b>",
+                "<b>Principal<b>",
+                "<b>Cumulative installment<b>",
+                "<b>Cumulative interest<b>",
+                "<b>Cumulative princiapl paid<b>",
+                "<b>Ending Balance<b>"] if lang == 1 else
+                [ "<b>Rok<b>",
+                "<b>Do spłaty - początek<b>",
+                "<b>Rata kredytu<b>",
+                "<b>Część odsetkowa<b>",
+                "<b>Część kapitałowa<b>",
+                "<b>Suma rat<b>",
+                "<b>Suma odsetek<b>",
+                "<b>Suma spłaconego kapitału<b>",
+                "<b>Do spłaty - koniec<b>"],
+        "header_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values": [df_source["Year"],
+                df_source["Balance"],
+                df_source["Installment"],
+                df_source["Interest"],
+                df_source["Principal"],
+                df_source["Total Payment"],
+                df_source["Total Interest"],
+                df_source["Total Principal"],
+                df_source["Ending Balance"]],
+        "values_align": ["left", "center", "center", "center", "center", "center", "center", "center", "center"],
+        "values_format": [".4", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f", ",.2f"]
+        })
+    return table_def
 ## Update graphs
 ### 1. Updated scatter plot - monthly
 @app.callback(
@@ -553,11 +664,165 @@ def update_pie_plot(data, lang):
     })
     return go.Figure(piePlot_def), go.Figure(piePlot_def)
 ### 4. WIBOR effect chart
+@app.callback(
+    Output('wibor_effect_chart', 'figure'),
+    Input('wibor_eff_store', 'data'),
+    Input('bank_interest', 'value'),
+    Input('lang_sel', 'value')
+)
+def create_heatMap_plot(wibor_data, bank_interest, lang):
+    chart_title = f"WIBOR impact on installment value (bank interest: {bank_interest}%)" if lang == 1 else f"Wpływ wysokości wskaźnika WIBOR na wysokość raty kredytu (marża banku: {bank_interest}%)"
+    xaxis_title = "WIBOR rate, %" if lang == 1 else "Wysokość WIBOR, %"
+    yaxis_title = "Mortgage balanace to pay" if lang == 1 else "Kwota pozostała do spłacenia"
+    legend_title = "Installment value" if lang == 1 else "Wysokość raty"
+    heatmap_plot_def = dict({
+        "data": [
+            {
+                "type": "heatmap",
+                "x": wibor_data["x"],
+                "y": wibor_data["y"],
+                "z": wibor_data["z"],
+                "text": wibor_data["z"],
+                "colorscale": "rdbu_r",
+                "texttemplate": "%{text}",
+                "textfont": {"size":10},
+                "name": "Balance",
+                "hovertemplate": "<b>WIBOR</b>: %{x}"+
+                                    "<br><b>Principal left to pay</b>: %{y} zł<br>"+
+                                    "<b>Installment:</b> %{z} zł"+
+                                    "<extra></extra>" if lang == 1 else "<b>WIBOR</b>: %{x}"+
+                                    "<br><b>Kapitał do spłacenia</b>: %{y} zł<br>"+
+                                    "<b>Rata:</b> %{z} zł"+
+                                    "<extra></extra>"
+            }],
+        "layout": {
+            "title": {
+                "text": chart_title,
+                "yanchor": "top",
+                "font": {
+                    "size": 18,
+                }
+            },
+            "xaxis_title": {
+                "text": xaxis_title,
+                "font_size": 16
+            },
+            "yaxis_title": {
+                "text": yaxis_title,
+                "font_size": 16
+            },
+            "legend_title": legend_title,
+            "hoverlabel": {
+                    "font_size": 12,
+            },
+            "template": "plotly_dark",
+        }
+    })
+    # Get the plot
+    return go.Figure(heatmap_plot_def)
 
 ### 5. Table of payments, split on interest and principal, balance - montly
-
+@app.callback(
+    Output('table_inst_mo', 'figure'),
+    Input('table_mo_def', 'data')
+)
+def create_table_installments_def(table_mo_def):
+    # Row colors definition
+    headerColor = 'black'
+    rowEvenColor = 'black'
+    rowOddColor = 'dimgrey'
+    # Get basic data for the table
+    payment_table_data = table_mo_def
+    # Return final input to create the table
+    table_def = dict({
+        "data": [
+        {
+            "type": "table",
+            "header": {
+            "values": payment_table_data["header_values"],
+            "line": {
+                "color": "white",
+                "width": .2
+            },
+            "fill_color": headerColor,
+            "align": payment_table_data["header_align"],
+            "font": {
+                "color": "white",
+                "size": 12
+            }
+            },
+            "cells": {
+            "values": payment_table_data["values"],
+            "format": payment_table_data["values_format"],
+            "line": {
+                "color": "white",
+                "width": .2
+            },
+            # 2-D list of colors for alternating rows
+            "fill_color": [[rowOddColor,rowEvenColor]*1000],
+            "align": payment_table_data["values_align"],
+            # "font": {
+            #   "color": "white",
+            #   "size": 11}
+            }    
+        }],
+        "layout": {
+        "template" : "plotly_dark",
+        }
+    })
+    # Get the plot - Monthly installments table
+    return go.Figure(table_def)
 ### 6. Table of payments, split on interest and principal, balance - yearly
-
+@app.callback(
+    Output('table_inst_yr', 'figure'),
+    Input('table_yr_def', 'data')
+)
+def create_table_installments_def(table_yr_def):
+    # Row colors definition
+    headerColor = 'black'
+    rowEvenColor = 'black'
+    rowOddColor = 'dimgrey'
+    # Get basic data for the table
+    payment_table_data = table_yr_def
+    # Return final input to create the table
+    table_def = dict({
+        "data": [
+        {
+            "type": "table",
+            "header": {
+            "values": payment_table_data["header_values"],
+            "line": {
+                "color": "white",
+                "width": .2
+            },
+            "fill_color": headerColor,
+            "align": payment_table_data["header_align"],
+            "font": {
+                "color": "white",
+                "size": 12
+            }
+            },
+            "cells": {
+            "values": payment_table_data["values"],
+            "format": payment_table_data["values_format"],
+            "line": {
+                "color": "white",
+                "width": .2
+            },
+            # 2-D list of colors for alternating rows
+            "fill_color": [[rowOddColor,rowEvenColor]*1000],
+            "align": payment_table_data["values_align"],
+            # "font": {
+            #   "color": "white",
+            #   "size": 11}
+            }    
+        }],
+        "layout": {
+        "template" : "plotly_dark",
+        }
+    })
+    # Get the plot - Yearly installments table
+    return go.Figure(table_def)
 #### X. TEST
 @app.callback(
     Output('test_id', 'value'),
@@ -578,6 +843,17 @@ def show_total_interest(value):
 def show_total_interest(data):
     return pd.read_json(data, orient='split').iloc[0,8]
 
+# Other methods:
+def calculate_first_installment_custom(installmentsType, amount, bankInterestRate, noOfInstallments, wibor):
+    if installmentsType == "fixed":
+        first_payment = round((amount * (bankInterestRate + wibor)) / (12 * (1 - (12/(12+(bankInterestRate + wibor))) ** noOfInstallments)), 2)
+        return first_payment
+    elif installmentsType == "desc":
+        first_payment = round(amount * (1 / noOfInstallments + (bankInterestRate + wibor) / 12), 2)
+        return first_payment
+    else:
+        print("Please specify installment type correctly")
+        pass
 # Run app
 if __name__ == '__main__':
     app.run_server(debug=True)
