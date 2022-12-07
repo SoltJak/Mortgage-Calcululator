@@ -2,19 +2,23 @@ from dash import Input, Output, callback
 import pandas as pd
 import plotly.graph_objs as go
 
+# Set up plots templates:
+plot_template = 'plotly_white'
 # App callbacks
 def get_callbacks(app):
     ## Language selection - update text
     @app.callback(
         Output('title_main', 'children'),
-        Output('subtitle_main', 'children'),
+        # Output('subtitle_main', 'children'),
         Input('lang_sel', 'value')
     )
     def change_lang_main(lang):
         if lang == 1:
-            return "Mortgage Calculator", "Check your installment amount and payment schedule!"
+            # return "MORTGAGE CALCULATOR", "Check your installment amount and payment schedule!"
+            return "MORTGAGE CALCULATOR"
         else:
-            return "Kalulator kredytowy", "Sprawdź szczegóły swojego kredytu"
+            # return "KALKULATOR KREDYTYOWY", "Sprawdź szczegóły swojego kredytu"
+            return "KALKULATOR KREDYTYOWY"
     @app.callback(
         Output('input_menu_title', 'title'),
         Output('loan_amount', 'children'),
@@ -269,7 +273,7 @@ def get_callbacks(app):
                         {
                             "text": chart_title
                         },
-                    "template" : "plotly_dark",
+                    "template" : plot_template,
                 }
         })
         return go.Figure(piePlot_def), go.Figure(piePlot_def)
@@ -325,7 +329,7 @@ def get_callbacks(app):
                 "hoverlabel": {
                         "font_size": 12,
                 },
-                "template": "plotly_dark",
+                "template": plot_template,
             }
         })
         # Get the plot
@@ -349,25 +353,25 @@ def get_callbacks(app):
         table_def = create_table_installments_def(table_yr_def)
         # Get the plot - Yearly installments table
         return go.Figure(table_def)
-    #### X. TEST
-    @app.callback(
-        Output('test_id', 'value'),
-        Input('first_installment', 'data')
-    )
-    def put_test_val(first_installnment):
-        return first_installnment
-    @app.callback(
-        Output('test_id2', 'value'),
-        Input('total_interest', 'data'),
-    )
-    def show_total_interest(value):
-        return value*100
-    @app.callback(
-        Output('test_id3', 'value'),
-        Input('installments_df_yr', 'data'),
-    )
-    def show_total_interest(data):
-        return pd.read_json(data, orient='split').iloc[0,8]
+    # #### X. TEST
+    # @app.callback(
+    #     Output('test_id', 'value'),
+    #     Input('first_installment', 'data')
+    # )
+    # def put_test_val(first_installnment):
+    #     return first_installnment
+    # @app.callback(
+    #     Output('test_id2', 'value'),
+    #     Input('total_interest', 'data'),
+    # )
+    # def show_total_interest(value):
+    #     return value*100
+    # @app.callback(
+    #     Output('test_id3', 'value'),
+    #     Input('installments_df_yr', 'data'),
+    # )
+    # def show_total_interest(data):
+    #     return pd.read_json(data, orient='split').iloc[0,8]
 
     # Other methods:
     def calculate_first_installment_custom(installmentsType, amount, bankInterestRate, noOfInstallments, wibor):
@@ -422,7 +426,7 @@ def get_callbacks(app):
                 }    
             }],
             "layout": {
-            "template" : "plotly_dark",
+            "template" : plot_template,
             }
         })
         return table_def
@@ -477,7 +481,14 @@ def get_callbacks(app):
                 {
                     "title": 
                         {
-                            "text": chart_title
+                            "text": chart_title,
+                            "font": {
+                                # "family": "OpenSans"
+                                # "family": "Times New Roman"
+                                "family": "Roboto",
+                                # "style": "normal",
+                                # "weight": 400
+                            }
                         },
                     "xaxis":
                         {
@@ -487,7 +498,7 @@ def get_callbacks(app):
                         {
                             "title": axes_names[1]
                         },
-                    "template" : "plotly_dark"
+                    "template" : plot_template
                 }
         })
         for i in range (0, len(traces)):

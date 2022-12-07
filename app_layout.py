@@ -18,54 +18,101 @@ layout = html.Div(className='app-body', children=[
     dcc.Store(id='table_yr_def'),
     dcc.Store(id='wibor_eff_store'),
     # About the app
-    html.Div(className="row",
-        children=[
-            dbc.Col(children=[
-                html.Div(children=[
-                    html.H1(
-                        id='title_main', 
-                        children='Mortgage Calculator'),
-                    html.H4(
-                        id='subtitle_main', 
-                        children="Check your installment amount and payment schedule!")
-                ]),
-            ], width = 10),
-            dbc.Col(children=[
-                html.Div(children=[
-                    # dbc.Label("Language"),
-                    dbc.RadioItems(
-                    id="lang_sel",
-                    className="btn-group",
-                    inputClassName="btn-check",
-                    labelClassName="btn btn-outline-primary",
-                    labelCheckedClassName="active",
-                    options=[
-                        {"label": "EN", "value": 1},
-                        {"label": "PL", "value": 2},
-                    ],
-                    value=1,
-                    )
-                ])
-            ], align="center")
-        ]
-    ),
+    ##HEADER
+    html.Div(style = {"margin-left": "7px", "margin-top": "7px", "margin-right": "7px"}, children=[
+        dbc.Card([
+            dbc.CardBody([
+                html.Div(className="row", children=[
+                    dbc.Col(children=[
+                        html.Div(children=[
+                            html.H4(
+                                id='title_main', 
+                                children="Mortgage Calculator & Analysis",
+                                className="card-title"),
+                        ]),
+                    ], width = 10),
+                    dbc.Col(children=[
+                        html.Div(children=[
+                            # dbc.Label("Language"),
+                            dbc.RadioItems(
+                            id="lang_sel",
+                            className="btn-group",
+                            inputClassName="btn-check",
+                            labelClassName="btn btn-outline-secondary",
+                            labelCheckedClassName="active",
+                            options=[
+                                {"label": "EN", "value": 1},
+                                {"label": "PL", "value": 2},
+                            ],
+                            value=1,
+                            )
+                        ])
+                    ], align="center")
+                ], style={'font-family': 'Verdana'}),
+            ])
+        ], color="primary", inverse=True),
+    ]),
+    # html.Div(className="bg-primary", children=[
+    #     html.Div(className="row",
+    #         children=[
+    #             dbc.Col(children=[
+    #                 html.Div(children=[
+    #                     html.H4(
+    #                         id='title_main', 
+    #                         children='MORTGAGE CALCULATOR'),
+    #                     # html.H4(
+    #                     #     id='subtitle_main', 
+    #                     #     children="Check your installment amount and payment schedule!")
+    #                 ]),
+    #             ], width = 10),
+    #             dbc.Col(children=[
+    #                 html.Div(children=[
+    #                     # dbc.Label("Language"),
+    #                     dbc.RadioItems(
+    #                     id="lang_sel",
+    #                     className="btn-group",
+    #                     inputClassName="btn-check",
+    #                     labelClassName="btn btn-outline-secondary",
+    #                     labelCheckedClassName="active",
+    #                     options=[
+    #                         {"label": "EN", "value": 1},
+    #                         {"label": "PL", "value": 2},
+    #                     ],
+    #                     value=1,
+    #                     )
+    #                 ])
+    #             ], align="center")
+    #         ]
+    #     , style={'font-family': 'Verdana'}),
+    # ]),
+    # LEFT SIDE BAR/CARD: 
     # Input data tab
-    html.Div(dbc.Accordion(
-        [
-            dbc.AccordionItem(
-                [
-                    # html.P("Modify your mortgage parameters"),
-                    html.Div(children=[
-                        html.Div(className="row",
-                            children=[
-                                dbc.Col(children=[html.Div(id="loan_amount", children="Loan Amount", className="menu-title"),
-                                dbc.Input(
-                                    id="principal_value",
-                                    type="number",
-                                    placeholder="Mortgage amount",
-                                    value=mortgage.loanAmount,
-                                )], width=2),
-                                dbc.Col(children=[html.Div(id="install_no", children="Number of Installments (in years and months)", className="menu-title"),
+    html.Div(style = {"margin-left": "7px", "margin-top": "7px", "margin-right": "7px"}, children=[
+        dbc.Card([
+            dbc.CardBody([
+                html.H5(
+                    id='input_data', 
+                    children="Input Data"
+                ),
+                html.Div(className="row", children=[
+                    dbc.Col([
+                        html.Div(id="loan_amount", children="Loan Amount")
+                    ]),
+                    dbc.Col([
+                        dbc.Input(
+                            id="principal_value",
+                            type="number",
+                            placeholder="Mortgage amount",
+                            value=mortgage.loanAmount,
+                            size="sm"
+                        )
+                    ])
+                ]),
+                html.Div(className="row", children=[
+                    html.Div(id="install_no", children="Number of Installments (in years and months)"),
+                    dbc.Row(children=[
+                        dbc.Col(
+                            [
                                 dbc.InputGroup(
                                     [
                                         dbc.InputGroupText(id="install_no_yr", children="Years:"),
@@ -74,11 +121,21 @@ layout = html.Div(className='app-body', children=[
                                             type="number",
                                             value=mortgage.noOfInstallments/12
                                         ),
+                                    ],
+                                    size="sm"
+                                ),
+                                dbc.InputGroup(
+                                    [                                
                                         dbc.InputGroupText(id="install_no_mo", children="Months:"),
                                         dbc.Input(
                                             id="no_of_installments_m",
                                             type="number"
                                         ),
+                                    ],
+                                    size="sm"
+                                ),
+                                dbc.InputGroup(
+                                    [    
                                         dbc.InputGroupText(id="install_no_t", children="Total:"),
                                         dbc.Input(
                                             id="no_of_installments_t",
@@ -86,73 +143,165 @@ layout = html.Div(className='app-body', children=[
                                             readonly=True,
                                         )
                                     ],
+                                    size="sm"
                                 )
-                                ], width=5),
-                                dbc.Col(children=[html.Div(id="install_type_sel", children="Installments Type", className="menu-title"),
-                                dcc.Dropdown(
-                                    id="installments_type",
-                                    options=[
-                                        {'label': 'Fixed', 'value': 'fixed'},
-                                        {'label': 'Descending', 'value': 'desc'},
-                                    ],
-                                    clearable=False,
-                                    searchable=False,
-                                    value=mortgage.installmentsType,
-                                    className="dropdown"
-                                )], width=2),
-                                dbc.Col(children=[
-                                    html.Div(id="interest_inp", children="Interest: Bank & WIBOR", className="menu-title"),
-                                    dbc.InputGroup([
+                            ], width={"offset": 1}
+                        )
+                    ]),
+                ]),
+                html.Div(className="row", children=[
+                    dbc.Col([
+                        html.Div(id="install_type_sel", children="Installments Type")
+                    ]),
+                    dbc.Col([
+                        dbc.Select(
+                            id="installments_type",
+                            options=[
+                                {'label': 'Fixed', 'value': 'fixed'},
+                                {'label': 'Descending', 'value': 'desc'},
+                            ],
+                            size="sm",
+                            value=mortgage.installmentsType,
+                        )
+                    ])
+                ]),
+                html.Div(className="row", children=[
+                    html.Div(id="interest_inp", children="Interest: Bank & WIBOR"),
+                    dbc.Row(children=[
+                        dbc.Col(
+                            [
+                                dbc.InputGroup(
+                                    [
                                         dbc.InputGroupText(id="bank_interest_inp", children="Bank %"),
                                         dbc.Input(
                                             id="bank_interest",
                                             type="number",
                                             value=mortgage.bankInterestRate*100,
                                         ),
+                                    ], size="sm"
+                                ),
+                                dbc.InputGroup(
+                                    [                                
                                         dbc.InputGroupText("WIBOR %"),
                                         dbc.Input(
                                             id="wibor_interest",
                                             type="number",
                                             value=mortgage.wiborInterestRate*100,
                                         )
-                                    ])
-                                ], width=3),
-                            ]
-                        ),]),
-                ],
-                id="input_menu_title",
-                title="Modify your mortgage parameters",
-            )
-        ],
-    )),
+                                    ], size="sm"
+                                )
+                            ], width={"offset": 1}
+                        )
+                    ]),
+                ]),
+            ]),
+        ], color="primary", inverse=True, className="col-md-3")
+    ]),
+
+
+    # html.Div(dbc.Accordion(
+    #     [
+    #         dbc.AccordionItem(
+    #             [
+    #                 # html.P("Modify your mortgage parameters"),
+    #                 html.Div(children=[
+    #                     html.Div(className="row",
+    #                         children=[
+    #                             dbc.Col(children=[html.Div(id="loan_amount", children="Loan Amount", className="menu-title"),
+    #                             dbc.Input(
+    #                                 id="principal_value",
+    #                                 type="number",
+    #                                 placeholder="Mortgage amount",
+    #                                 value=mortgage.loanAmount,
+    #                             )], width=2),
+    #                             dbc.Col(children=[html.Div(id="install_no", children="Number of Installments (in years and months)", className="menu-title"),
+    #                             dbc.InputGroup(
+    #                                 [
+    #                                     dbc.InputGroupText(id="install_no_yr", children="Years:"),
+    #                                     dbc.Input(
+    #                                         id="no_of_installments_y",
+    #                                         type="number",
+    #                                         value=mortgage.noOfInstallments/12
+    #                                     ),
+    #                                     dbc.InputGroupText(id="install_no_mo", children="Months:"),
+    #                                     dbc.Input(
+    #                                         id="no_of_installments_m",
+    #                                         type="number"
+    #                                     ),
+    #                                     dbc.InputGroupText(id="install_no_t", children="Total:"),
+    #                                     dbc.Input(
+    #                                         id="no_of_installments_t",
+    #                                         type="number",
+    #                                         readonly=True,
+    #                                     )
+    #                                 ],
+    #                             )
+    #                             ], width=5),
+    #                             dbc.Col(children=[html.Div(id="install_type_sel", children="Installments Type", className="menu-title"),
+    #                             dcc.Dropdown(
+    #                                 id="installments_type",
+    #                                 options=[
+    #                                     {'label': 'Fixed', 'value': 'fixed'},
+    #                                     {'label': 'Descending', 'value': 'desc'},
+    #                                 ],
+    #                                 clearable=False,
+    #                                 searchable=False,
+    #                                 value=mortgage.installmentsType,
+    #                                 className="dropdown"
+    #                             )], width=1),
+    #                             dbc.Col(children=[
+    #                                 html.Div(id="interest_inp", children="Interest: Bank & WIBOR", className="menu-title"),
+    #                                 dbc.InputGroup([
+    #                                     dbc.InputGroupText(id="bank_interest_inp", children="Bank %"),
+    #                                     dbc.Input(
+    #                                         id="bank_interest",
+    #                                         type="number",
+    #                                         value=mortgage.bankInterestRate*100,
+    #                                     ),
+    #                                     dbc.InputGroupText("WIBOR %"),
+    #                                     dbc.Input(
+    #                                         id="wibor_interest",
+    #                                         type="number",
+    #                                         value=mortgage.wiborInterestRate*100,
+    #                                     )
+    #                                 ])
+    #                             ], width=4),
+    #                         ]
+    #                     ),]),
+    #             ],
+    #             id="input_menu_title",
+    #             title="Modify your mortgage parameters",
+    #         )
+    #     ],
+    # )),
     # The Visuals
-    html.Div(className="row",
-    children=[
-        dbc.Col(children=[html.Div(children="Test cell", className="menu-title"),
-        dbc.Input(
-            id="test_id",
-            type="number",
-            placeholder="Test Result",
-        )], width=3),]),
-    html.Div(className="row",
-    children=[
-        dbc.Col(children=[html.Div(children="Test cell2", className="menu-title"),
-        dbc.Input(
-            id="test_id2",
-            type="number",
-            placeholder="Test Result2",
-        )], width=3),]),
-    html.Div(className="row",
-    children=[
-        dbc.Col(children=[html.Div(children="Test cell3", className="menu-title"),
-        dbc.Input(
-            id="test_id3",
-            type="number",
-            placeholder="Test Result3",
-        )], width=3),]),
+    # html.Div(className="row",
+    # children=[
+    #     dbc.Col(children=[html.Div(children="Test cell", className="menu-title"),
+    #     dbc.Input(
+    #         id="test_id",
+    #         type="number",
+    #         placeholder="Test Result",
+    #     )], width=3),]),
+    # html.Div(className="row",
+    # children=[
+    #     dbc.Col(children=[html.Div(children="Test cell2", className="menu-title"),
+    #     dbc.Input(
+    #         id="test_id2",
+    #         type="number",
+    #         placeholder="Test Result2",
+    #     )], width=3),]),
+    # html.Div(className="row",
+    # children=[
+    #     dbc.Col(children=[html.Div(children="Test cell3", className="menu-title"),
+    #     dbc.Input(
+    #         id="test_id3",
+    #         type="number",
+    #         placeholder="Test Result3",
+    #     )], width=3),]),
     html.Div(className="row", children=[
         # Define scatter plot to show monthly installments
-        dbc.Col(html.Div(style = {"margin-left": "7px", "margin-top": "7px"}, className="four columns pretty_container", children=[
+        dbc.Col(html.Div(style = {"margin-left": "7px", "margin-top": "7px"}, className="card", children=[
             dcc.Graph(id='monthly_install_chart',
                         figure=mortgage.monthlyInstallmentsScatter_fig,
                         config={"modeBarButtonsToRemove": ['lasso2d', 'select2d']})
@@ -187,7 +336,7 @@ layout = html.Div(className='app-body', children=[
             ]),
     html.Div(className="row", children=[    
         # Define table to show payments schedule (monthly)
-        dbc.Col(html.Div(className="four columns pretty_container", children=[
+        dbc.Col(html.Div(className="card", children=[
             dcc.Tabs(id='tabs', children=[
                 dcc.Tab(label='Monthly', id='tab_monthly', children=[
                     dbc.Card(dbc.CardBody(
@@ -213,6 +362,4 @@ layout = html.Div(className='app-body', children=[
                         figure=mortgage.paymentSplit_piePlot_fig),
         ]), width=4),
     ]),
-    # Store for intermediate values
-    dcc.Store(id='intermediate_data')
 ])

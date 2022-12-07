@@ -160,7 +160,7 @@ class mortgageData:
                         {
                             "title": y_axis_title
                         },
-                    "template" : "plotly_dark"
+                    "template" : "plotly_white"
 
                 }
         })
