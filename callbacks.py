@@ -1,6 +1,7 @@
 from dash import Input, Output, callback
 import pandas as pd
 import plotly.graph_objs as go
+import app_layout as al
 
 # Set up plots templates:
 plot_template = 'plotly_white'
@@ -353,6 +354,22 @@ def get_callbacks(app):
         table_def = create_table_installments_def(table_yr_def)
         # Get the plot - Yearly installments table
         return go.Figure(table_def)
+    
+    # ####### Update charts on results page
+    @app.callback(
+        Output('results-content', 'children'),
+        [Input('url', 'pathname')]
+    )
+    def render_results_content(pathname):
+        if pathname == '/overview':
+            return al.scatter_monthly
+        elif pathname == '/payment_scatter':
+            return al.scatter_monthly
+        elif pathname == '/wibor_schedule':
+            return al.wibor_effect_chart
+
+        
+
     # #### X. TEST
     # @app.callback(
     #     Output('test_id', 'value'),
