@@ -160,7 +160,7 @@ class mortgageData:
                         {
                             "title": y_axis_title
                         },
-                    "template" : "plotly_dark"
+                    "template" : "plotly_white"
 
                 }
         })
@@ -169,10 +169,14 @@ class mortgageData:
     def monthlyInstallmentsScatter_fig(self):
         # Data for scatter plot - monthly
         x_series = self.df_installments["Month"]
-        trace_balance = self.df_installments["Balance"]
-        trace_totalPay = self.df_installments["Total Payment"]
-        trace_totalInt = self.df_installments["Total Interest"]
-        trace_totalPrin = self.df_installments["Total Principal"]
+        # trace_balance = self.df_installments["Balance"]
+        # trace_totalPay = self.df_installments["Total Payment"]
+        # trace_totalInt = self.df_installments["Total Interest"]
+        # trace_totalPrin = self.df_installments["Total Principal"]
+        trace_balance = []
+        trace_totalPay = []
+        trace_totalInt = []
+        trace_totalPrin = []
         x_axis_title = "Month"
         y_axis_title = "Cumulative payment, PLN"
         # Get the plot
@@ -183,10 +187,14 @@ class mortgageData:
     def yearlyInstallmentsScatter_fig(self):
         # Data for scatter plot - yearly
         x_series = self.df_installments_yr["Year"]
-        trace_balance = self.df_installments_yr["Balance"]
-        trace_totalPay = self.df_installments_yr["Total Payment"]
-        trace_totalInt = self.df_installments_yr["Total Interest"]
-        trace_totalPrin = self.df_installments_yr["Total Principal"]
+        # trace_balance = self.df_installments_yr["Balance"]
+        # trace_totalPay = self.df_installments_yr["Total Payment"]
+        # trace_totalInt = self.df_installments_yr["Total Interest"]
+        # trace_totalPrin = self.df_installments_yr["Total Principal"]
+        trace_balance = []
+        trace_totalPay = []
+        trace_totalInt = []
+        trace_totalPrin = []
         x_axis_title = "Year"
         y_axis_title = "Cumulative payment, PLN"
         # Get the plot
@@ -194,18 +202,21 @@ class mortgageData:
         return go.Figure(plot_installments_def)     
     
     # 2. Pie chart - share of interest & principal within total payment
-    def PayPiePlot_def(self, labels, values):
+    def PayPiePlot_def(self, labels, values, colors):
         return dict({
             "data": [
                 {
                     "type": "pie",
                     "labels": labels,
-                    "values": values,
+                    # "values": values,
+                    "values": [],
                     "textinfo": "label+percent",
                     "texttemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b>",
                     "insidetextorientation": "radial",
                     "hovertemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b><extra></extra>",    
-                    "hoverinfo": "label+percent+value"                        
+                    "hoverinfo": "label+percent+value",
+                    "hole": .4,
+                    "marker": {"colors": colors}                        
                 }],
             "layout": 
                 {
@@ -213,7 +224,7 @@ class mortgageData:
                         {
                             "text": "Payment breakdown"
                         },
-                    "template" : "plotly_dark",
+                    "template" : "plotly_white",
                     # "textinfo": "label+percent",
                     # "insidetextorientation": "radial"
                 }
@@ -224,8 +235,9 @@ class mortgageData:
         # Data for pie plot
         labels_ = ['Total Principal','Total Interest']
         values_ = [self.df_installments["Total Principal"].max(), self.df_installments["Total Interest"].max()]
+        colors_ = ['#18BC9C', '#2C3E50']
         # Get the plot
-        piePlot_def = self.PayPiePlot_def(labels_, values_)
+        piePlot_def = self.PayPiePlot_def(labels_, values_, colors_)
         return go.Figure(piePlot_def)
 
     # 3. Heat map - the effect of WIBOR on installment
@@ -267,7 +279,7 @@ class mortgageData:
                 "hoverlabel": {
                         "font_size": 12,
                 },
-                "template": "plotly_dark",
+                "template": "plotly_white",
             }
         })
    

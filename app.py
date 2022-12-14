@@ -10,13 +10,18 @@ from dash_bootstrap_templates import load_figure_template
 
 from callbacks import get_callbacks
 import app_layout
+from input_tab import input_callbacks
+from output_tab import output_callbacks
+from language_mod import lang_callbacks
+import mortgage as mD
 
 # Start logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Set up APP
-external_stylesheets = []
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+# external_stylesheets = ['dbc.themes.CYBORG', 'http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900']
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server  # used by gunicorn in production mode
 cache = Cache(app.server, config={
     'CACHE_TYPE': 'filesystem',
@@ -25,17 +30,20 @@ cache = Cache(app.server, config={
 
 # Set up styling
 # This has to do with layout/styling
-fig_layout_defaults = dict(
-    plot_bgcolor="#F9F9F9",
-    paper_bgcolor="#F9F9F9",
-)
-load_figure_template('DARKLY')
+# fig_layout_defaults = dict(
+#     plot_bgcolor="#F9F9F9",
+#     paper_bgcolor="#F9F9F9",
+# )
+load_figure_template('FLATLY')
 
 # Application layout
 app.layout = app_layout.layout
 
 # App callbacks
 get_callbacks(app)
+input_callbacks(app)
+output_callbacks(app)
+lang_callbacks(app)
 
 # Run app
 if __name__ == '__main__':

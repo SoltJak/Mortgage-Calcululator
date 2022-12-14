@@ -1,46 +1,12 @@
 from dash import Input, Output, callback
 import pandas as pd
 import plotly.graph_objs as go
+import app_layout as al
 
+# Set up plots templates:
+plot_template = 'plotly_white'
 # App callbacks
 def get_callbacks(app):
-    ## Language selection - update text
-    @app.callback(
-        Output('title_main', 'children'),
-        Output('subtitle_main', 'children'),
-        Input('lang_sel', 'value')
-    )
-    def change_lang_main(lang):
-        if lang == 1:
-            return "Mortgage Calculator", "Check your installment amount and payment schedule!"
-        else:
-            return "Kalulator kredytowy", "Sprawdź szczegóły swojego kredytu"
-    @app.callback(
-        Output('input_menu_title', 'title'),
-        Output('loan_amount', 'children'),
-        Output('install_no', 'children'),
-        Output('install_no_yr', 'children'),
-        Output('install_no_mo', 'children'),
-        Output('install_no_t', 'children'),
-        Output('install_type_sel', 'children'),
-        Output('interest_inp', 'children'),
-        Output('bank_interest_inp', 'children'),
-        Output('installments_type', 'options'),
-        Input('lang_sel', 'value')
-    )
-    def change_lang(lang):
-        if lang == 1:
-            return "Modify your mortgage parameters", "Loan Amount", "Number of Installments (in years and months)", "Years:", "Months:", "Total:", "Installments Type", "Interest: Bank & WIBOR", "Bank %", [          {'label': 'Fixed', 'value': 'fixed'}, {'label': 'Descending', 'value': 'desc'}]
-        else:
-            return "Zmień parametry swojego kredytu", "Kwota kredytu", "Liczba rat (lat i miesięcy)", "Lata:", "Miesiące:", "W sumie:", "Typ rat", "Oprocentowanie (marża banku i WIBOR)", "Marża %", [          {'label': 'Stała', 'value': 'fixed'}, {'label': 'Malejąca', 'value': 'desc'}]
-    ## Update number of years of installments if months are defined
-    @app.callback(
-        Output('no_of_installments_t', 'value'),
-        Input('no_of_installments_y', 'value'),
-        Input('no_of_installments_m', 'value')
-    )
-    def update_no_of_yearly_installments(value_y, value_m):
-        return int(0 if value_y is None else value_y) * 12 + int(0 if value_m is None else value_m)
     ## Recalculate all DFs for updated inputs
     ### Stores
     #### 1. Total interest
@@ -156,6 +122,30 @@ def get_callbacks(app):
         df_grouped["Total Principal"] = df_grouped["Principal"].cumsum()
         df_grouped = df_grouped[["Balance", "Installment", "Interest", "Principal", "Total Payment", "Total Interest", "Total Principal", "Ending Balance"]]
         return df_grouped.reset_index().to_json(orient='split', date_format='iso')
+    #### 4.5 Installments dataframe - selected - scatter plot
+    @app.callback(
+        Output('installments_df_sel', 'data'),
+        Input('installments_df', 'data'),
+        Input('installments_df_yr', 'data'),
+        Input('radioitems-payment_scatter', 'value')
+    )
+    def select_df(df_month, df_year, period):
+        if period == 1:
+            return df_month
+        else:
+            return df_year    
+    #### 4.6 Installments dataframe - selected - table
+    @app.callback(
+        Output('installments_df_sel_amort', 'data'),
+        Input('installments_df', 'data'),
+        Input('installments_df_yr', 'data'),
+        Input('radioitems-payment_table', 'value')
+    )
+    def select_df(df_month, df_year, period):
+        if period == 1:
+            return df_month
+        else:
+            return df_year    
     #### 5. Installments table data - Monthly
     @app.callback(
         Output('table_mo_def', 'data'),
@@ -177,197 +167,201 @@ def get_callbacks(app):
         table_def = create_inst_table_def(df_source, "year", lang)
         return table_def
     ## Update graphs
-    ### 1. Updated scatter plot - monthly
-    @app.callback(
-        Output('monthly_install_chart', 'figure'),
-        Output('monthly_install_chart1', 'figure'),
-        Input('installments_df', 'data'),
-        Input('lang_sel', 'value')
-    )
-    def update_scatter_monthly(data, lang):
-        df_installments = pd.read_json(data, orient='split')
-        x_series = df_installments["Month"]
-        trace_balance = df_installments["Balance"]
-        trace_totalPay = df_installments["Total Payment"]
-        trace_totalInt = df_installments["Total Interest"]
-        trace_totalPrin = df_installments["Total Principal"]
-        chart_title = "Cumulative mortgage payments over time" if lang == 1 else "Suma wpłat na spłatę kredytu w czasie jego trwania"
-        x_axis_title = "Month" if lang == 1 else "Miesiąc"
-        y_axis_title = "Cumulative payment, PLN" if lang == 1 else "Suma wpłat, PLN"
-        balance_name = "Balance" if lang == 1 else "Kapitał do spłaty"
-        total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
-        tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
-        tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
-        traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
-        traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
-        axes_names = [x_axis_title, y_axis_title]
-        hovertemplates = ["<b>Month</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Month</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
-        fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)    
-        return go.Figure(fig_def), go.Figure(fig_def)
+    # ### 1. Updated scatter plot - monthly
+    # @app.callback(
+    #     Output('monthly_install_chart', 'figure'),
+    #     Output('monthly_install_chart1', 'figure'),
+    #     Input('installments_df', 'data'),
+    #     Input('lang_sel', 'value')
+    # )
+    # def update_scatter_monthly(data, lang):
+    #     df_installments = pd.read_json(data, orient='split')
+    #     x_series = df_installments["Month"]
+    #     trace_balance = df_installments["Balance"]
+    #     trace_totalPay = df_installments["Total Payment"]
+    #     trace_totalInt = df_installments["Total Interest"]
+    #     trace_totalPrin = df_installments["Total Principal"]
+    #     chart_title = "Cumulative mortgage payments over time" if lang == 1 else "Suma wpłat na spłatę kredytu w czasie jego trwania"
+    #     x_axis_title = "Month" if lang == 1 else "Miesiąc"
+    #     y_axis_title = "Cumulative payment, PLN" if lang == 1 else "Suma wpłat, PLN"
+    #     balance_name = "Balance" if lang == 1 else "Kapitał do spłaty"
+    #     total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
+    #     tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
+    #     tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
+    #     traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
+    #     traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
+    #     axes_names = [x_axis_title, y_axis_title]
+    #     hovertemplates = ["<b>Month</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Month</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Month</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Month</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Miesiąc</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
+    #     fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)    
+    #     return go.Figure(fig_def), go.Figure(fig_def)
     ### 2. Updated scatter plot - yearly
-    @app.callback(
-        Output('yearly_install_chart', 'figure'),
-        Output('yearly_install_chart1', 'figure'),
-        Input('installments_df_yr', 'data'),
-        Input('lang_sel', 'value')
-    )
-    def update_scatter_yearly(data, lang):
-        df_installments_yr = pd.read_json(data, orient='split')
-        x_series = df_installments_yr["Year"]
-        trace_balance = df_installments_yr["Balance"]
-        trace_totalPay = df_installments_yr["Total Payment"]
-        trace_totalInt = df_installments_yr["Total Interest"]
-        trace_totalPrin = df_installments_yr["Total Principal"]
-        chart_title = "Cumulative mortgage payments over time" if lang == 1 else "Suma wpłat na spłatę kredytu w czasie jego trwania"
-        x_axis_title = "Year" if lang == 1 else "Rok"
-        y_axis_title = "Cumulative payment, PLN" if lang == 1 else "Suma wpłat, PLN"
-        balance_name = "Balance" if lang == 1 else "Kapitał do spłaty"
-        total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
-        tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
-        tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
-        traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
-        traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
-        axes_names = [x_axis_title, y_axis_title]
-        hovertemplates = ["<b>Year</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
-        "<b>Year</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
-        fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)
-        return go.Figure(fig_def), go.Figure(fig_def)
+    # @app.callback(
+    #     Output('yearly_install_chart', 'figure'),
+    #     Output('yearly_install_chart1', 'figure'),
+    #     Input('installments_df_yr', 'data'),
+    #     Input('lang_sel', 'value')
+    # )
+    # def update_scatter_yearly(data, lang):
+    #     df_installments_yr = pd.read_json(data, orient='split')
+    #     x_series = df_installments_yr["Year"]
+    #     trace_balance = df_installments_yr["Balance"]
+    #     trace_totalPay = df_installments_yr["Total Payment"]
+    #     trace_totalInt = df_installments_yr["Total Interest"]
+    #     trace_totalPrin = df_installments_yr["Total Principal"]
+    #     chart_title = "Cumulative mortgage payments over time" if lang == 1 else "Suma wpłat na spłatę kredytu w czasie jego trwania"
+    #     x_axis_title = "Year" if lang == 1 else "Rok"
+    #     y_axis_title = "Cumulative payment, PLN" if lang == 1 else "Suma wpłat, PLN"
+    #     balance_name = "Balance" if lang == 1 else "Kapitał do spłaty"
+    #     total_pay_name = "Total payment" if lang == 1 else "Suma wpłat"
+    #     tot_interest = "Total Interest" if lang == 1 else "Suma odsetek"
+    #     tot_principal = "Total Principal" if lang == 1 else "Suma spłaconego kapitału"
+    #     traces = [trace_balance, trace_totalPay, trace_totalInt, trace_totalPrin]
+    #     traces_names = [balance_name, total_pay_name, tot_interest, tot_principal]
+    #     axes_names = [x_axis_title, y_axis_title]
+    #     hovertemplates = ["<b>Year</b>: %{x}"+"<br>"+"<b>Balance: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Kapitał do spłaty: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Year</b>: %{x}"+"<br>"+"<b>Total Payment: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma wpłat: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Year</b>: %{x}"+"<br>"+"<b>Total Interest paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Suma zapłaconych odsetek: </b>: %{y:,.2f} zł<extra></extra>",
+    #     "<b>Year</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
+    #     fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)
+    #     return go.Figure(fig_def), go.Figure(fig_def)
     ### 3. Pie chart - share of interest & principal within total payment
-    @app.callback(
-        Output('pie_plot_split_', 'figure'),
-        Output('pie_plot_split', 'figure'),
-        Input('installments_df', 'data'),
-        Input('lang_sel', 'value')
-    )
-    def update_pie_plot(data, lang):
-        df_installments = pd.read_json(data, orient='split')
-        # Data for pie plot
-        labels = ['Total Principal','Total Interest'] if lang == 1 else ['Całkowity kapitał','Suma odsetek']
-        values = [df_installments["Total Principal"].max(), df_installments["Total Interest"].max()]
-        chart_title = "Payment breakdown" if lang == 1 else "Składowe wpłat"
-        # Get the plot
-        piePlot_def = dict({
-            "data": [
-                {
-                    "type": "pie",
-                    "labels": labels,
-                    "values": values,
-                    "textinfo": "label+percent",
-                    "texttemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b>",
-                    "insidetextorientation": "radial",
-                    "hovertemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b><extra></extra>",    
-                    "hoverinfo": "label+percent+value"                        
-                }],
-            "layout": 
-                {
-                    "title": 
-                        {
-                            "text": chart_title
-                        },
-                    "template" : "plotly_dark",
-                }
-        })
-        return go.Figure(piePlot_def), go.Figure(piePlot_def)
-    ### 4. WIBOR effect chart
-    @app.callback(
-        Output('wibor_effect_chart', 'figure'),
-        Input('wibor_eff_store', 'data'),
-        Input('bank_interest', 'value'),
-        Input('lang_sel', 'value')
-    )
-    def create_heatMap_plot(wibor_data, bank_interest, lang):
-        chart_title = f"WIBOR impact on installment value (bank interest: {bank_interest}%)" if lang == 1 else f"Wpływ wysokości wskaźnika WIBOR na wysokość raty kredytu (marża banku: {bank_interest}%)"
-        xaxis_title = "WIBOR rate, %" if lang == 1 else "Wysokość WIBOR, %"
-        yaxis_title = "Mortgage balanace to pay" if lang == 1 else "Kwota pozostała do spłacenia"
-        legend_title = "Installment value" if lang == 1 else "Wysokość raty"
-        heatmap_plot_def = dict({
-            "data": [
-                {
-                    "type": "heatmap",
-                    "x": wibor_data["x"],
-                    "y": wibor_data["y"],
-                    "z": wibor_data["z"],
-                    "text": wibor_data["z"],
-                    "colorscale": "rdbu_r",
-                    "texttemplate": "%{text}",
-                    "textfont": {"size":10},
-                    "name": "Balance",
-                    "hovertemplate": "<b>WIBOR</b>: %{x}"+
-                                        "<br><b>Principal left to pay</b>: %{y} zł<br>"+
-                                        "<b>Installment:</b> %{z} zł"+
-                                        "<extra></extra>" if lang == 1 else "<b>WIBOR</b>: %{x}"+
-                                        "<br><b>Kapitał do spłacenia</b>: %{y} zł<br>"+
-                                        "<b>Rata:</b> %{z} zł"+
-                                        "<extra></extra>"
-                }],
-            "layout": {
-                "title": {
-                    "text": chart_title,
-                    "yanchor": "top",
-                    "font": {
-                        "size": 18,
-                    }
-                },
-                "xaxis_title": {
-                    "text": xaxis_title,
-                    "font_size": 16
-                },
-                "yaxis_title": {
-                    "text": yaxis_title,
-                    "font_size": 16
-                },
-                "legend_title": legend_title,
-                "hoverlabel": {
-                        "font_size": 12,
-                },
-                "template": "plotly_dark",
-            }
-        })
-        # Get the plot
-        return go.Figure(heatmap_plot_def)
+    # @app.callback(
+    #     Output('pie_plot_split_', 'figure'),
+    #     Output('pie_plot_split', 'figure'),
+    #     Input('installments_df', 'data'),
+    #     Input('lang_sel', 'value')
+    # )
+    # def update_pie_plot(data, lang):
+    #     df_installments = pd.read_json(data, orient='split')
+    #     # Data for pie plot
+    #     labels = ['Total Principal','Total Interest'] if lang == 1 else ['Całkowity kapitał','Suma odsetek']
+    #     values = [df_installments["Total Principal"].max(), df_installments["Total Interest"].max()]
+    #     chart_title = "Payment breakdown" if lang == 1 else "Składowe wpłat"
+    #     # Get the plot
+    #     piePlot_def = dict({
+    #         "data": [
+    #             {
+    #                 "type": "pie",
+    #                 "labels": labels,
+    #                 "values": values,
+    #                 "textinfo": "label+percent",
+    #                 "texttemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b>",
+    #                 "insidetextorientation": "radial",
+    #                 "hovertemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b><extra></extra>",    
+    #                 "hoverinfo": "label+percent+value"                        
+    #             }],
+    #         "layout": 
+    #             {
+    #                 "title": 
+    #                     {
+    #                         "text": chart_title
+    #                     },
+    #                 "template" : plot_template,
+    #             }
+    #     })
+    #     return go.Figure(piePlot_def), go.Figure(piePlot_def)
+    # ### 4. WIBOR effect chart
+    # @app.callback(
+    #     Output('wibor_effect_chart', 'figure'),
+    #     Input('wibor_eff_store', 'data'),
+    #     Input('bank_interest', 'value'),
+    #     Input('lang_sel', 'value')
+    # )
+    # def create_heatMap_plot(wibor_data, bank_interest, lang):
+    #     chart_title = f"WIBOR impact on installment value (bank interest: {bank_interest}%)" if lang == 1 else f"Wpływ wysokości wskaźnika WIBOR na wysokość raty kredytu (marża banku: {bank_interest}%)"
+    #     xaxis_title = "WIBOR rate, %" if lang == 1 else "Wysokość WIBOR, %"
+    #     yaxis_title = "Mortgage balanace to pay" if lang == 1 else "Kwota pozostała do spłacenia"
+    #     legend_title = "Installment value" if lang == 1 else "Wysokość raty"
+    #     heatmap_plot_def = dict({
+    #         "data": [
+    #             {
+    #                 "type": "heatmap",
+    #                 "x": wibor_data["x"],
+    #                 "y": wibor_data["y"],
+    #                 "z": wibor_data["z"],
+    #                 "text": wibor_data["z"],
+    #                 "colorscale": "rdbu_r",
+    #                 "texttemplate": "%{text}",
+    #                 "textfont": {"size":10},
+    #                 "name": "Balance",
+    #                 "hovertemplate": "<b>WIBOR</b>: %{x}"+
+    #                                     "<br><b>Principal left to pay</b>: %{y} zł<br>"+
+    #                                     "<b>Installment:</b> %{z} zł"+
+    #                                     "<extra></extra>" if lang == 1 else "<b>WIBOR</b>: %{x}"+
+    #                                     "<br><b>Kapitał do spłacenia</b>: %{y} zł<br>"+
+    #                                     "<b>Rata:</b> %{z} zł"+
+    #                                     "<extra></extra>"
+    #             }],
+    #         "layout": {
+    #             "title": {
+    #                 "text": chart_title,
+    #                 "yanchor": "top",
+    #                 "font": {
+    #                     "size": 18,
+    #                 }
+    #             },
+    #             "xaxis_title": {
+    #                 "text": xaxis_title,
+    #                 "font_size": 16
+    #             },
+    #             "yaxis_title": {
+    #                 "text": yaxis_title,
+    #                 "font_size": 16
+    #             },
+    #             "legend_title": legend_title,
+    #             "hoverlabel": {
+    #                     "font_size": 12,
+    #             },
+    #             "template": plot_template,
+    #         }
+    #     })
+    #     # Get the plot
+    #     return go.Figure(heatmap_plot_def)
 
     ### 5. Table of payments, split on interest and principal, balance - montly
-    @app.callback(
-        Output('table_inst_mo', 'figure'),
-        Input('table_mo_def', 'data')
-    )
-    def create_table_monthly(table_mo_def):
-        table_def = create_table_installments_def(table_mo_def)
-        # Get the plot - Monthly installments table
-        return go.Figure(table_def)
-    ### 6. Table of payments, split on interest and principal, balance - yearly
-    @app.callback(
-        Output('table_inst_yr', 'figure'),
-        Input('table_yr_def', 'data')
-    )
-    def create_table_yearly(table_yr_def):
-        table_def = create_table_installments_def(table_yr_def)
-        # Get the plot - Yearly installments table
-        return go.Figure(table_def)
-    #### X. TEST
-    @app.callback(
-        Output('test_id', 'value'),
-        Input('first_installment', 'data')
-    )
-    def put_test_val(first_installnment):
-        return first_installnment
-    @app.callback(
-        Output('test_id2', 'value'),
-        Input('total_interest', 'data'),
-    )
-    def show_total_interest(value):
-        return value*100
-    @app.callback(
-        Output('test_id3', 'value'),
-        Input('installments_df_yr', 'data'),
-    )
-    def show_total_interest(data):
-        return pd.read_json(data, orient='split').iloc[0,8]
+    # @app.callback(
+    #     Output('table_inst_mo', 'figure'),
+    #     Input('table_mo_def', 'data')
+    # )
+    # def create_table_monthly(table_mo_def):
+    #     table_def = create_table_installments_def(table_mo_def)
+    #     # Get the plot - Monthly installments table
+    #     return go.Figure(table_def)
+    # ### 6. Table of payments, split on interest and principal, balance - yearly
+    # @app.callback(
+    #     Output('table_inst_yr', 'figure'),
+    #     Input('table_yr_def', 'data')
+    # )
+    # def create_table_yearly(table_yr_def):
+    #     table_def = create_table_installments_def(table_yr_def)
+    #     # Get the plot - Yearly installments table
+    #     return go.Figure(table_def)
+
+
+        
+
+    # #### X. TEST
+    # @app.callback(
+    #     Output('test_id', 'value'),
+    #     Input('first_installment', 'data')
+    # )
+    # def put_test_val(first_installnment):
+    #     return first_installnment
+    # @app.callback(
+    #     Output('test_id2', 'value'),
+    #     Input('total_interest', 'data'),
+    # )
+    # def show_total_interest(value):
+    #     return value*100
+    # @app.callback(
+    #     Output('test_id3', 'value'),
+    #     Input('installments_df_yr', 'data'),
+    # )
+    # def show_total_interest(data):
+    #     return pd.read_json(data, orient='split').iloc[0,8]
 
     # Other methods:
     def calculate_first_installment_custom(installmentsType, amount, bankInterestRate, noOfInstallments, wibor):
@@ -422,7 +416,7 @@ def get_callbacks(app):
                 }    
             }],
             "layout": {
-            "template" : "plotly_dark",
+            "template" : plot_template,
             }
         })
         return table_def
@@ -477,7 +471,14 @@ def get_callbacks(app):
                 {
                     "title": 
                         {
-                            "text": chart_title
+                            "text": chart_title,
+                            "font": {
+                                # "family": "OpenSans"
+                                # "family": "Times New Roman"
+                                "family": "Roboto",
+                                # "style": "normal",
+                                # "weight": 400
+                            }
                         },
                     "xaxis":
                         {
@@ -487,7 +488,7 @@ def get_callbacks(app):
                         {
                             "title": axes_names[1]
                         },
-                    "template" : "plotly_dark"
+                    "template" : plot_template
                 }
         })
         for i in range (0, len(traces)):
