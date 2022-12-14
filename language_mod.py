@@ -46,3 +46,37 @@ def lang_callbacks(app):
             return "Details of mortgage simulation", "Overview", "Payment over time", "Amortization schedule", "WIBOR effect"
         else:
             return "Wyniki symulacji kredytu", "Podsumowanie", "Struktura płatności", "Harmonogram spłaty", "Wpływ zmian WIBOR"
+    #### Output - Overview tab language change
+    @app.callback(
+        Output('kpi_label', 'children'),
+        Output('kpi_note', 'children'),
+        Output('pie_label', 'children'),
+        Input('lang_sel', 'value')        
+    )
+    def output_overview_change_lang(lang):
+        if lang == 1:
+            return "Your Installment per Month:", "Please note that for descending installment type, above amount is for 1st installment only.", "Payment Breakdown",
+        else:
+            return "Wysokość Twojej miesiącznej raty:", "Uwaga! Dla raty stałej powyższa kwota dotyczy tylko pierwszej raty (kolejne maleją)", "Składowe Wpłat",
+    #### Output - Payment over time tab language change
+    @app.callback(
+        Output('pay_label', 'children'),
+        Output('radioitems-payment_scatter', 'options'),
+        Input('lang_sel', 'value')        
+    )
+    def output_payment_change_lang(lang):
+        if lang == 1:
+            return "Cumulative mortgage payments over time - view by:", [{"label": "Month", "value": 1}, {"label": "Year", "value": 2},]
+        else:
+            return "Suma wpłat na spłatę kredytu w czasie jego trwania - widok:", [{"label": "Miesięczny", "value": 1}, {"label": "Roczny", "value": 2},]
+    #### Output - Amortization schedule language change
+    @app.callback(
+        Output('amort_label', 'children'),
+        Output('radioitems-payment_table', 'options'),
+        Input('lang_sel', 'value')        
+    )
+    def output_schedule_change_lang(lang):
+        if lang == 1:
+            return "Amortization Schedule - view by:", [{"label": "Month", "value": 1}, {"label": "Year", "value": 2},]
+        else:
+            return "Harmonogram spłaty kredytu - widok:", [{"label": "Miesięczny", "value": 1}, {"label": "Roczny", "value": 2},]

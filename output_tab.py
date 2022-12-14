@@ -54,7 +54,7 @@ overview_content = html.Div([
 ])
 payment_content = html.Div([
     # html.H6(id='payment_title_output', children="Cumulative mortgage payments over time - view by ", style={"margin-top": "20px"}),
-    dbc.Label("Cumulative mortgage payments over time - view by:", style={"margin-top": "20px"}),
+    dbc.Label("Cumulative mortgage payments over time - view by:", id="pay_label", style={"margin-top": "20px"}),
     dbc.RadioItems(
         options=[
             {"label": "Month", "value": 1},
@@ -67,7 +67,7 @@ payment_content = html.Div([
     dbc.Spinner(dcc.Graph(id='monthly_install_chart', figure=mortgage.monthlyInstallmentsScatter_fig), size="lg")
 ])
 amort_content = html.Div([
-    dbc.Label("Amortization Schedule - view by:", style={"margin-top": "20px"}),
+    dbc.Label("Amortization Schedule - view by:", id="amort_label", style={"margin-top": "20px"}),
     dbc.RadioItems(
         options=[
             {"label": "Month", "value": 1},
@@ -309,7 +309,7 @@ def output_callbacks(app):
                         },
                     "legend": {
                         "yanchor": "bottom",
-                        "y": -0.22,
+                        "y": -0.25,
                         "xanchor": "center",
                         "x": .5,
                         "orientation": "h",
