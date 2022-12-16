@@ -1,6 +1,11 @@
-from dash import Dash, dash_table, dcc, html
+''' This file contains definition of components
+used for OUTPUT tab definition including charts
+in the visualization. Also included callbacks
+to make input tab (as well entire application 
+reactive to user changes'''
+
+from dash import dcc, html
 from dash import Input, Output, callback
-from dash.dash_table.Format import Format, Scheme, Sign, Symbol
 
 import dash_bootstrap_components as dbc
 
@@ -12,17 +17,11 @@ from mortgage import mortgageData as mD
 # Initial Data:
 mortgage = mD(.02, .075, 300000, 360, 'fixed')
 
-# Set DF formatting
-def format_float(value):
-    return f'{value:,.2f}'
-pd.options.display.float_format
-mortgage.df_installments['Balance']=mortgage.df_installments['Balance'].map('{:,.2f}%'.format)
-df = mortgage.df_installments
-
 # Set up plots templates:
 plot_template = 'plotly_white'
 
-# OUTPUT DATA TAB - components
+#### OUTPUT DATA TAB - definition of GUI components
+# 1. Ovierview tab content
 overview_content = html.Div([
     dbc.Row([
         dbc.Col(
@@ -39,7 +38,6 @@ overview_content = html.Div([
             ), size="lg"),
             md=6,
         ),
-        # dbc.Col([], width=3),
         dbc.Col([
             html.Div([
                 dbc.Label("Payment Breakdown", id="pie_label", color="primary"),
@@ -52,8 +50,9 @@ overview_content = html.Div([
         ], width=6)
     ]),
 ])
+
+# 2. Payment chart tab content
 payment_content = html.Div([
-    # html.H6(id='payment_title_output', children="Cumulative mortgage payments over time - view by ", style={"margin-top": "20px"}),
     dbc.Label("Cumulative mortgage payments over time - view by:", id="pay_label", style={"margin-top": "20px"}),
     dbc.RadioItems(
         options=[
@@ -66,6 +65,8 @@ payment_content = html.Div([
     ),
     dbc.Spinner(dcc.Graph(id='monthly_install_chart', figure=mortgage.monthlyInstallmentsScatter_fig), size="lg")
 ])
+
+# 3. Amortization schedule tab content
 amort_content = html.Div([
     dbc.Label("Amortization Schedule - view by:", id="amort_label", style={"margin-top": "20px"}),
     dbc.RadioItems(
@@ -79,13 +80,14 @@ amort_content = html.Div([
     ),
     html.Br(),
     dbc.Spinner(html.Div(id='table_wrapper', style={"maxHeight": "400px", "overflow": "scroll"}), size="lg")
-    # dbc.Table.from_dataframe(mortgage.df_installments.round(2), id="amort_table", striped=True, bordered=True, hover=True, index=False, size="sm"),
 ])
 
+# 4. WIBOR changes sensitivity tab
 wiboreff_content = html.Div([
     dbc.Spinner(dcc.Graph(id='wibor_effect_chart', figure=mortgage.wiborEffect_HeatMap_fig), size="lg")
 ])
 
+###### Apply layout of Output panel as a composition of tabs defined above ######
 outputs = html.Div([
     html.H5(id='title_output', children="Details of mortgage simulation"),
     html.Hr(className="my-2"),
@@ -101,7 +103,64 @@ outputs = html.Div([
 
 #### CALLBACKS ####
 def output_callbacks(app):
-    # 1. Payment scatter chart update - monthly
+
+    # 1. Installment KPI - display of 1st installment definition & update
+    @app.callback(
+        Output('kpi_installment', 'children'),
+        Input('first_installment', 'data'),
+        Input('lang_sel', 'value')
+    )
+    def display_KPI_installment(data, lang):
+        return f"{data:,.2f}" + " zł"
+
+    # 2. Pie plot - payments split - chart definition & update
+    @app.callback(
+        Output('pie_plot_split', 'figure'),
+        Input('installments_df', 'data'),
+        Input('lang_sel', 'value')
+    )
+    def update_pie_plot(data, lang):
+        df_installments = pd.read_json(data, orient='split')
+        # Data for pie plot
+        labels = ['Total Principal','Total Interest'] if lang == 1 else ['Całkowity kapitał','Suma odsetek']
+        values = [df_installments["Total Principal"].max(), df_installments["Total Interest"].max()]
+        colors_ = ['#18BC9C', '#2C3E50']
+        chart_title = "Payment breakdown" if lang == 1 else "Składowe wpłat"
+        # Get the plot
+        piePlot_def = dict({
+            "data": [
+                {
+                    "type": "pie",
+                    "labels": labels,
+                    "values": values,
+                    "textinfo": "label+percent",
+                    "texttemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b>",
+                    "insidetextorientation": "radial",
+                    "hovertemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b><extra></extra>",    
+                    "hoverinfo": "label+percent+value",
+                    "hole": .4,
+                    "marker": {"colors": colors_}                          
+                }],
+            "layout": 
+                {
+                    # "title": 
+                    #     {
+                    #         "text": chart_title
+                    #     },
+                    "legend": {
+                        "yanchor": "bottom",
+                        "y": -.1,
+                        "xanchor": "center",
+                        "x": .5,
+                        "orientation": "h"
+                    },
+                    "margin": {"t": 0},
+                    "template" : plot_template,
+                }
+        })
+        return go.Figure(piePlot_def)
+
+    # 3. Payment over time - scatter chart definition & update
     @app.callback(
         Output('monthly_install_chart', 'figure'),
         Input('installments_df_sel', 'data'),
@@ -154,61 +213,28 @@ def output_callbacks(app):
             "<b>Year</b>: %{x}"+"<br>"+"<b>Total Principal paid: </b>: %{y:,.2f} zł<extra></extra>" if lang == 1 else "<b>Rok</b>: %{x}"+"<br>"+"<b>Spłacony kapitał: </b>: %{y:,.2f} zł<extra></extra>"]
             fig_def = create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates)
         return go.Figure(fig_def)
-    # 2.0 Installment KPI
+
+    # 4. Amortization schedule table
     @app.callback(
-        Output('kpi_installment', 'children'),
-        Input('first_installment', 'data'),
-        Input('lang_sel', 'value')
+        Output('table_wrapper', 'children'),
+        Input('installments_df_sel_amort', 'data'),
+        Input('lang_sel', 'value'),
+        Input('radioitems-payment_table', 'value')
     )
-    def display_KPI_installment(data, lang):
-        return f"{data:,.2f}" + " zł"
-    # 2. Pie plot - payments split
-    @app.callback(
-        Output('pie_plot_split', 'figure'),
-        Input('installments_df', 'data'),
-        Input('lang_sel', 'value')
-    )
-    def update_pie_plot(data, lang):
-        df_installments = pd.read_json(data, orient='split')
-        # Data for pie plot
-        labels = ['Total Principal','Total Interest'] if lang == 1 else ['Całkowity kapitał','Suma odsetek']
-        values = [df_installments["Total Principal"].max(), df_installments["Total Interest"].max()]
-        colors_ = ['#18BC9C', '#2C3E50']
-        chart_title = "Payment breakdown" if lang == 1 else "Składowe wpłat"
-        # Get the plot
-        piePlot_def = dict({
-            "data": [
-                {
-                    "type": "pie",
-                    "labels": labels,
-                    "values": values,
-                    "textinfo": "label+percent",
-                    "texttemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b>",
-                    "insidetextorientation": "radial",
-                    "hovertemplate": "<b>%{label}</b><br>%{value:,.2f} zł<br><b>(%{percent})</b><extra></extra>",    
-                    "hoverinfo": "label+percent+value",
-                    "hole": .4,
-                    "marker": {"colors": colors_}                          
-                }],
-            "layout": 
-                {
-                    # "title": 
-                    #     {
-                    #         "text": chart_title
-                    #     },
-                    "legend": {
-                        "yanchor": "bottom",
-                        "y": -.1,
-                        "xanchor": "center",
-                        "x": .5,
-                        "orientation": "h"
-                    },
-                    "margin": {"t": 0},
-                    "template" : plot_template,
-                }
-        })
-        return go.Figure(piePlot_def)
-    #3. WIBOR effect chart
+    def update_table(data, lang, period):
+        df_en = pd.read_json(data, orient='split')
+        if lang == 1:
+            df = df_en
+        else:
+            df_pl = df_en.copy()
+            if period == 1:
+                df_pl.rename(columns = {"Year":'Rok', "Balance":'Do spłaty', 'Installment':'Rata', "Interest": "Odsetki", "Principal": "Kapitał", "Total Payment": "Suma wpłat", "Total Interest": "Zapłacone odsetki", "Total Principal": "Spłacony kapitał", "Ending Balance": "Do spłaty - po"}, inplace = True)
+            else:
+                df_pl.rename(columns = {"Month": "Miesiąc", "Year":'Rok', "Balance":'Do spłaty', 'Installment':'Rata', "Interest": "Odsetki", "Principal": "Kapitał", "Total Payment": "Suma wpłat", "Total Interest": "Zapłacone odsetki", "Total Principal": "Spłacony kapitał", "Ending Balance": "Do spłaty - po"}, inplace = True)
+            df = df_pl
+        return dbc.Table.from_dataframe(df.round(2), id="amort_table", striped=True, bordered=True, hover=True, index=False, size="sm"),
+
+    # 5. WIBOR effect chart - definition & update
     @app.callback(
         Output('wibor_effect_chart', 'figure'),
         Input('wibor_eff_store', 'data'),
@@ -265,17 +291,6 @@ def output_callbacks(app):
         })
         # Get the plot
         return go.Figure(heatmap_plot_def)
-    # 4. Amortization schedule table
-    @app.callback(
-        Output('table_wrapper', 'children'),
-        Input('installments_df_sel_amort', 'data'),
-        Input('lang_sel', 'value'),
-        Input('radioitems-payment_table', 'value')
-    )
-    def update_table(data, lang, period):
-        df = pd.read_json(data, orient='split')
-        return dbc.Table.from_dataframe(df.round(2), id="amort_table", striped=True, bordered=True, hover=True, index=False, size="sm"),
-
     
     ###### Other methods:
     def create_scatter_definition(x_series, traces, traces_names, chart_title, axes_names, hovertemplates):

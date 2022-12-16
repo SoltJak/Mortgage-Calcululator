@@ -1,10 +1,12 @@
-from dash import Dash, dash_table, dcc, html
-from dash import Input, Output, callback
-# from app import app
+''' This file contains definition of components
+used for INPUT tab definition. Also included
+callbacks to make input tab (as well entire 
+application reactive to user changes of input data'''
 
-from flask_caching import Cache
+from dash import dcc, html
+from dash import Input, Output, callback
+
 import dash_bootstrap_components as dbc
-from dash_bootstrap_templates import load_figure_template
 
 from mortgage import mortgageData as mD
 
@@ -51,7 +53,7 @@ inputs = html.Div(
 
 #### CALLBACKS ####
 def input_callbacks(app):
-    # Calculate 
+    # Calculate total number of installments
     @app.callback(
         Output('no_of_installments_t', 'value'),
         Input('no_of_installments_y', 'value'),

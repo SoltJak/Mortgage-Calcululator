@@ -1,3 +1,7 @@
+''' This file is a definition of class that is a container
+for mortgage data. The class also defines a blueprint for all
+the charts creation'''
+
 import pandas as pd
 import plotly.graph_objects as go
 

@@ -1,8 +1,13 @@
-from dash import Dash, dash_table, dcc, html
+''' This file contains definition of an application
+layout, using components defined for:
+- input tab
+- output tab
+- data store.
+used for INPUT tab definition.'''
 
-from flask_caching import Cache
+from dash import dcc, html
+
 import dash_bootstrap_components as dbc
-from dash_bootstrap_templates import load_figure_template
 from mortgage import mortgageData as mD
 
 # Import layout components
@@ -14,7 +19,7 @@ mortgage = mD(.02, .075, 300000, 360, 'fixed')
 
 # LAYOUT
 layout = html.Div(className='app-body', children=[
-    # Stores
+    # Stores - storing data used for visualization creation
     dcc.Store(id='total_interest', data=mortgage.totalInterestRate),
     dcc.Store(id='first_installment'),
     dcc.Store(id='installments_df'),
@@ -66,11 +71,4 @@ layout = html.Div(className='app-body', children=[
         dbc.Col([otab.outputs], width=9) ###### RIGHT SIDE BAR - Output data tab
         ]
     ),
-    
-    #             # Define pie plot to show split of payment (interest vs. principal)
-    #     dbc.Col(html.Div(className="four columns pretty_container", children=[
-    #         dcc.Graph(id='pie_plot_split',
-    #                     figure=mortgage.paymentSplit_piePlot_fig),
-    #     ]), width=4),
-    # ]),
 ])
