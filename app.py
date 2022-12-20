@@ -19,7 +19,7 @@ import mortgage as mD
 logging.basicConfig(level=logging.DEBUG)
 
 # Set up APP
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], title='Mortgage Calculator')
 server = app.server  # used by gunicorn in production mode
 cache = Cache(app.server, config={
     'CACHE_TYPE': 'filesystem',
