@@ -96,7 +96,7 @@ outputs = html.Div([
         dbc.Tab(overview_content, id="overview_tab_label", label="Overview"),
         dbc.Tab(payment_content, id="payment_tab_label", label="Payment over time"),
         dbc.Tab(amort_content, id="amort_tab_label", label="Amortization schedule"),
-        dbc.Tab(wiboreff_content, id="wiboreff_tab_label", label="WIBOR effect"),
+        dbc.Tab(wiboreff_content, id="wiboreff_tab_label", label="Base interest effect"),
     ])
 ],style = {"margin-left": "7px", "margin-top": "7px", "margin-right": "7px"})
 
@@ -242,8 +242,8 @@ def output_callbacks(app):
         Input('lang_sel', 'value')
     )
     def create_heatMap_plot(wibor_data, bank_interest, lang):
-        chart_title = f"WIBOR impact on installment value (bank interest: {bank_interest}%)" if lang == 1 else f"Wpływ wysokości wskaźnika WIBOR na wysokość raty kredytu (marża banku: {bank_interest}%)"
-        xaxis_title = "WIBOR rate, %" if lang == 1 else "Wysokość WIBOR, %"
+        chart_title = f"Base interest impact on installment value (bank interest: {bank_interest}%)" if lang == 1 else f"Wpływ wysokości stopy procentowej (WIRON/WIBOR) na ratę kredytu (marża banku: {bank_interest}%)"
+        xaxis_title = "Base interest, %" if lang == 1 else "Wysokość stopy procentowej (WIRON/WIBOR), %"
         yaxis_title = "Mortgage balanace to pay" if lang == 1 else "Kwota pozostała do spłacenia"
         legend_title = "Installment value" if lang == 1 else "Wysokość raty"
         heatmap_plot_def = dict({
@@ -258,10 +258,10 @@ def output_callbacks(app):
                     "texttemplate": "%{text}",
                     "textfont": {"size":10},
                     "name": "Balance",
-                    "hovertemplate": "<b>WIBOR</b>: %{x}"+
+                    "hovertemplate": "<b>Base interest</b>: %{x}"+
                                         "<br><b>Principal left to pay</b>: %{y} zł<br>"+
                                         "<b>Installment:</b> %{z} zł"+
-                                        "<extra></extra>" if lang == 1 else "<b>WIBOR</b>: %{x}"+
+                                        "<extra></extra>" if lang == 1 else "<b>Stopa procentowa (WIRON/WIBOR)</b>: %{x}"+
                                         "<br><b>Kapitał do spłacenia</b>: %{y} zł<br>"+
                                         "<b>Rata:</b> %{z} zł"+
                                         "<extra></extra>"

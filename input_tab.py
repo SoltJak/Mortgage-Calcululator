@@ -36,14 +36,14 @@ inputs = html.Div(
                         {'label': 'Descending', 'value': 'desc'},
                     ], value=mortgage.installmentsType),
         html.Br(),
-        dbc.Label("Mortgage interest (bank + WIBOR)", id="label_mort_int", html_for="mort-interest"),
+        dbc.Label("Mortgage interest (bank + base)", id="label_mort_int", html_for="mort-interest"),
         dbc.InputGroup([
             dbc.InputGroupText(id="bank_interest_inp", children="Bank %"),
             dbc.Input(id="bank_interest", type="number", value=mortgage.bankInterestRate*100)],
             size="sm"
         ),
         dbc.InputGroup([                                
-            dbc.InputGroupText(id="WIBOR_interest_inp", children="WIBOR %"),
+            dbc.InputGroupText(id="WIBOR_interest_inp", children="Base %"),
             dbc.Input(id="wibor_interest", type="number", value=mortgage.wiborInterestRate*100)],
             size="sm"
         )
