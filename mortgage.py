@@ -258,21 +258,21 @@ class mortgageData:
                     "texttemplate": "%{text}",
                     "textfont": {"size":10},
                     "name": "Balance",
-                    "hovertemplate": "<b>WIBOR</b>: %{x}"+
+                    "hovertemplate": "<b>Stopa procentowa</b>: %{x}"+
                                         "<br><b>Kapitał do spłacenia</b>: %{y} zł<br>"+
                                         "<b>Rata:</b> %{z} zł"+
                                         "<extra></extra>"
                 }],
             "layout": {
                 "title": {
-                    "text": "Wpływ wysokości wskaźnika WIBOR na wysokość raty kredytu",
+                    "text": "Wpływ wysokości stopy procentowej (WIRON/WIBOR) na wysokość raty kredytu",
                     "yanchor": "top",
                     "font": {
                         "size": 18,
                     }
                 },
                 "xaxis_title": {
-                    "text": "WIBOR",
+                    "text": "Stopa procentowa: WIRON/WIBOR",
                     "font_size": 16
                 },
                 "yaxis_title": {

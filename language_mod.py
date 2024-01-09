@@ -32,9 +32,9 @@ def lang_callbacks(app):
     )
     def input_change_lang(lang):
         if lang == 1:
-            return "Input Data", "Mortgage amount", "Mortgage duration (years + months)", "Provide number of years", "Provide number of months", "Total number of installments", "Installment type", [{'label': 'Fixed', 'value': 'fixed'}, {'label': 'Descending', 'value': 'desc'}], "Mortgage interest (bank + WIBOR)", "Bank %", "WIBOR %"
+            return "Input Data", "Mortgage amount", "Mortgage duration (years + months)", "Provide number of years", "Provide number of months", "Total number of installments", "Installment type", [{'label': 'Fixed', 'value': 'fixed'}, {'label': 'Descending', 'value': 'desc'}], "Mortgage total interest", "Bank %", "Base  %"
         else:
-            return "Dane", "Kwota kredytu", "Czas spłaty (lata i miesiące)", "Podaj liczbę lat", "Podaj liczbę miesięcy", "Całkowita ilość rat", "Rodzaj raty", [{'label': 'Stała', 'value': 'fixed'}, {'label': 'Malejąca', 'value': 'desc'}], "Oprocentowanie (marża banku + WIBOR)", "Marża %", "WIBOR %"
+            return "Dane", "Kwota kredytu", "Czas spłaty (lata i miesiące)", "Podaj liczbę lat", "Podaj liczbę miesięcy", "Całkowita ilość rat", "Rodzaj raty", [{'label': 'Stała', 'value': 'fixed'}, {'label': 'Malejąca', 'value': 'desc'}], "Oprocentowanie całkowite", "Marża %", "WIBOR/WIRON %"
     #### Outputs tab - menu (langauage change)
     @app.callback(
         Output('title_output', 'children'),
@@ -46,9 +46,9 @@ def lang_callbacks(app):
     )
     def output_change_lang(lang):
         if lang == 1:
-            return "Details of mortgage simulation", "Overview", "Payment over time", "Amortization schedule", "WIBOR effect"
+            return "Details of mortgage simulation", "Overview", "Payment over time", "Amortization schedule", "Base interest change effect"
         else:
-            return "Wyniki symulacji kredytu", "Podsumowanie", "Struktura płatności", "Harmonogram spłaty", "Wpływ zmian WIBOR"
+            return "Wyniki symulacji kredytu", "Podsumowanie", "Struktura płatności", "Harmonogram spłaty", "Wpływ zmian stopy procentowej"
     #### Output - Overview tab (language change)
     @app.callback(
         Output('kpi_label', 'children'),
